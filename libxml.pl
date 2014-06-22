@@ -9,6 +9,8 @@ use Web::Scraper;
 use URI;
 use Data::Dump;
 use Encode qw( decode encode );
+use utf8;
+use Thread qw ( async ) ;
 
 ################################################################################
 # DB 접속 설정
@@ -16,8 +18,14 @@ my $dbh = DBI->connect(
 	'dbi:mysql:database=jellydb',
 	"$ENV{MYSQL_ID}",
 	"$ENV{MYSQL_PW}",
-	{ RaiseError => 1, PrintError => 0, AutoCommit => 0 },
+	{
+		RaiseError => 1,
+		PrintError => 1,
+		AutoCommit => 0,
+		mysql_enable_utf8 => 1, 
+	},
 );
+$dbh->do('SET NAMES utf8');
 ################################################################################
 # DC 갤러리 설정
 my $gal_name = 'bicycle';
@@ -46,9 +54,37 @@ sub start {
 
 		my $list_url = $gal_l_url . $current_page_num;
 		print "list_url $list_url\n";
-		my $no_list = get_no($list_url);
-		get_content($no_list);
+		my $nos = get_no($list_url);
+		my @new_array = reverse( @{ $nos } );
+
+		my $sql = "select no from dc_$gal_name order by no desc limit 0,1";
+		my $sth = $dbh->prepare($sql);
+		$sth->execute or die "$DBI::errstr\n";
+		my $sql_no = $sth->fetchrow_array;
+		unless ( $sql_no ) {
+			$sql_no = 1;
+		}
+
+
+		#이미 저장 된 내용이나 공지는 배열에서 제거
+		foreach my $index ( 0 .. $#new_array ) {
+			print $index . "\t";
+			if ( $new_array[$index] eq '공지' ) {
+				print encode( "utf-8", "공지 삭제 $index\n" );
+				delete $new_array[$index];
+			} elsif ( $new_array[$index] <= $sql_no ) {
+				print encode( "utf-8", "이미 있는거  $new_array[$index]\t$sql_no\n");
+				delete $new_array[$index];
+			} else {
+				print encode( "utf-8", "$new_array[$index]\n");
+			}
+
+		}
+		dd(@new_array);
+		#완성된 배열을 컨텐츠 수집기에 넘김
+		get_content( @new_array );
 	}
+
 	$dbh->disconnect();
 }
 
@@ -64,21 +100,34 @@ sub get_no {
 }
 
 sub get_content {
-	my ($nos) = @_;
+	my @nos = @_;
+	my ( $no, $author, $title, $content, $sth );
 
-	for my $no ( @{$nos} ) {
-		if ( $no =~ /(\d+)/ ) {
-			my $f_url = $gal_v_url . "&no=" . $no;
-			print $f_url . "\n";
-			my $scrape_content = scraper {
-				process "head > meta", "content[]" => '@content';
-				process "div.s_write", "text" => "TEXT";
-			};
+	for $no ( @nos ) {
+		if ( $no ) {
+			if ( $no =~ /(\d+)/ ) {
+				my $f_url = $gal_v_url . "&no=" . $no;
+				print $f_url . "\n";
+				my $scrape_content = scraper {
+					process "head > meta", "content[]" => '@content';
+					process "div.s_write", "text" => "TEXT";
+				};
 
-			my $res = $scrape_content->scrape( URI->new($f_url) );
-			my $result_string = $no . " : " . $res->{content}[7] . " " . $res->{content}[7] . " \t " . $res->{text} . "\n";
-			print encode("utf-8", "$result_string") . "\n";
+				my $res = $scrape_content->scrape( URI->new($f_url) );
+				$title = $dbh->quote( $res->{content}[7] );# =~ s,(.*) - 자전거 갤러리,$1,g;
+				$title =~ s,(.*) - 자전거 갤러리,$1,g;
+				$author = $dbh->quote( $res->{content}[8] );
+				$content = $dbh->quote( $res->{text} );
+
+				my $sql = "insert into dc_$gal_name ( no, author, title, content ) values ( $no, $author, $title, $content )";
+				print encode( "utf-8", $sql ) . "\n";
+				$sth = $dbh->prepare( "$sql" , { "mysql_use_result" => 1} );
+				$sth->execute or die "$DBI::errstr\n";
+			}
 		}
 	}
-
+	if ( $sth ) {
+		$sth->finish();
+	}
 }
+
