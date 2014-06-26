@@ -15,7 +15,7 @@ use Thread qw ( async ) ;
 ################################################################################
 # DB 접속 설정
 my $dbh = DBI->connect(
-	'dbi:mysql:database=jellydb',
+	'dbi:mysql:database=$ENV{MYSQL_DB}',
 	"$ENV{MYSQL_ID}",
 	"$ENV{MYSQL_PW}",
 	{
