@@ -1,4 +1,4 @@
-#!/bin/env perl 
+#!/usr/bin/env perl 
 use strict;
 use warnings;
 use DBI;
@@ -15,7 +15,7 @@ use Thread qw ( async ) ;
 ################################################################################
 # DB 접속 설정
 my $dbh = DBI->connect(
-	'dbi:mysql:database=$ENV{MYSQL_DB}',
+	"dbi:mysql:database=$ENV{MYSQL_DB}",
 	"$ENV{MYSQL_ID}",
 	"$ENV{MYSQL_PW}",
 	{
