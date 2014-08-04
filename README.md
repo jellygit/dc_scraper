@@ -6,7 +6,7 @@ DC inside 특정 갤러리에 접속하여 게시물 목록을 얻어온 뒤, �
 
 # 요구사항
 * Perl 5.10+
-* MySQL
+* MySQL or MariaDB
 
 # 사용 방법
 1. SQL 테이블 생성

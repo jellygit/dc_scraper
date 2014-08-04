@@ -11,6 +11,7 @@ use Data::Dump;
 use Encode qw( decode encode );
 use utf8;
 use Thread qw ( async ) ;
+HTML::TreeBuilder::LibXML->replace_original();
 
 ################################################################################
 # DB 접속 설정
