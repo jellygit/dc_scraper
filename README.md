@@ -17,3 +17,4 @@ DC inside 특정 갤러리에 접속하여 게시물 목록을 얻어온 뒤, �
 1. SQL 테이블 생성
 2. libxml.pl 파일의 Shebang 확인(기본값은 #!/usr/bin/env perl ), 실행권한 주기(chmod u+x libxml.pl)
 3. ./libxml.pl
+ 1. 주기적인 실행을 원하는 경우 kill_dizitown.sh 스크립트 실행. 2~7초 간격으로 실행됨.
