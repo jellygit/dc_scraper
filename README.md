@@ -6,6 +6,11 @@ DC inside 특정 갤러리에 접속하여 게시물 목록을 얻어온 뒤, �
 
 # 요구사항
 * Perl 5.10+
+ * DBI
+ * DBD::mysql
+ * HTML::TreeBuilder::LibXML
+ * Web::Scraper
+ * LWP::UserAgent
 * MySQL or MariaDB
 
 # 사용 방법
