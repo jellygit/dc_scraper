@@ -4,7 +4,7 @@ do
 	perl libxml.pl
 	sec=($RANDOM)
 	sec=$((sec%=5))
-	sec=$((sec+2))
+	sec=$((sec+7))
 	echo "sleep $sec"
 	sleep $sec
 
